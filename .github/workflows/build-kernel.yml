@@ -30,11 +30,11 @@ jobs:
         run: |
           git clone --depth=1 https://github.com/kdrag0n/proton-clang.git "$GITHUB_WORKSPACE/clang"
 
-      - name: Setup KernelSU-Next / SukiSU Driver
+      - name: Setup KernelSU Driver
         run: |
           rm -rf KernelSU KernelSU-Next drivers/kernelsu
-          git clone --depth=1 -b v1.0.5 https://github.com/KernelSU-Next/KernelSU-Next.git KernelSU-Next
-          ln -sf ../KernelSU-Next/kernel drivers/kernelsu
+          git clone --depth=1 -b v0.9.5 https://github.com/tiann/KernelSU.git KernelSU
+          ln -sf ../KernelSU/kernel drivers/kernelsu
 
       - name: Build Kernel, AnyKernel3 Zip & Fastboot boot.img
         run: |
@@ -42,8 +42,8 @@ jobs:
           chmod +x build.sh
           ./build.sh all
           mkdir -p "$GITHUB_WORKSPACE/output"
-          cp out/AnyKernel3-picasso/*.zip "$GITHUB_WORKSPACE/output/" 2>/dev/null || true
-          cp out/boot.img "$GITHUB_WORKSPACE/output/" 2>/dev/null || true
+          cp out/AnyKernel3-picasso/*.zip "$GITHUB_WORKSPACE/output/"
+          cp out/boot.img "$GITHUB_WORKSPACE/output/"
           cp out/arch/arm64/boot/dtbo.img "$GITHUB_WORKSPACE/output/" 2>/dev/null || cp out/AnyKernel3-picasso/dtbo.img "$GITHUB_WORKSPACE/output/" 2>/dev/null || true
           ls -lh "$GITHUB_WORKSPACE/output"
 
