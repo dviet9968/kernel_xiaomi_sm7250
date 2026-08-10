@@ -14,7 +14,6 @@ jobs:
       - name: Checkout Kernel Source
         uses: actions/checkout@v4
         with:
-          submodules: recursive
           fetch-depth: 1
 
       - name: Install Build Dependencies
@@ -31,9 +30,11 @@ jobs:
         run: |
           git clone --depth=1 https://github.com/kdrag0n/proton-clang.git "$GITHUB_WORKSPACE/clang"
 
-      - name: Setup KernelSU Driver
+      - name: Setup KernelSU / SukiSU Driver
         run: |
-          curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s main
+          rm -rf KernelSU drivers/kernelsu
+          git clone --depth=1 -b main https://github.com/tiann/KernelSU.git KernelSU
+          ln -sf ../KernelSU/kernel drivers/kernelsu
 
       - name: Build Kernel & AnyKernel3 Zip
         run: |
