@@ -68,30 +68,33 @@ generate_flashable(){
     echo " Generating Flashable Kernel";
     echo "------------------------------";
 
-    cd $OUT;
-    
-    echo ' Getting AnyKernel ';
-    curl $ANYKERNEL_URL -o $ANYKERNEL_FILE;
+    ROOT_DIR="$(pwd)"
+    rm -rf $OUT/$ANYKERNEL_PATH
+    mkdir -p $OUT/$ANYKERNEL_PATH
 
-    unzip -o $ANYKERNEL_FILE;
+    if [ -d "$ROOT_DIR/anykernel3" ]; then
+        echo ' Using bundled AnyKernel3 template ';
+        cp -r "$ROOT_DIR/anykernel3/"* $OUT/$ANYKERNEL_PATH/
+    else
+        echo ' Getting AnyKernel ';
+        curl -sL $ANYKERNEL_URL -o $OUT/$ANYKERNEL_FILE
+        unzip -q -o $OUT/$ANYKERNEL_FILE -d $OUT/
+    fi
 
     # Ensure dynamic block device detection for Pixel Experience / AOSP recoveries
-    sed -i -e 's|block=/dev/block/.*|block=auto;|g' $ANYKERNEL_PATH/anykernel.sh 2>/dev/null || sed -i '' -e 's|block=/dev/block/.*|block=auto;|g' $ANYKERNEL_PATH/anykernel.sh
-    sed -i -e 's|is_slot_device=0;|is_slot_device=auto;|g' $ANYKERNEL_PATH/anykernel.sh 2>/dev/null || sed -i '' -e 's|is_slot_device=0;|is_slot_device=auto;|g' $ANYKERNEL_PATH/anykernel.sh
+    sed -i -e 's|block=.*|block=boot;|g' $OUT/$ANYKERNEL_PATH/anykernel.sh 2>/dev/null || sed -i '' -e 's|block=.*|block=boot;|g' $OUT/$ANYKERNEL_PATH/anykernel.sh
+    sed -i -e 's|is_slot_device=.*|is_slot_device=0;|g' $OUT/$ANYKERNEL_PATH/anykernel.sh 2>/dev/null || sed -i '' -e 's|is_slot_device=.*|is_slot_device=0;|g' $OUT/$ANYKERNEL_PATH/anykernel.sh
 
-    echo ' Removing old package file ';
-    rm -rf $ANYKERNEL_PATH/$TARGET_KERNEL_NAME*;
-
-    echo ' Copying Kernel File '; 
-    cp -r $TARGET_KERNEL_FILE $ANYKERNEL_PATH/;
-    cp -r $TARGET_KERNEL_DTB $ANYKERNEL_PATH/;
-    cp -r $TARGET_KERNEL_DTBO $ANYKERNEL_PATH/;
+    echo ' Copying Kernel Files '; 
+    cp -r $OUT/$TARGET_KERNEL_FILE $OUT/$ANYKERNEL_PATH/
+    cp -r $OUT/$TARGET_KERNEL_DTB $OUT/$ANYKERNEL_PATH/
+    cp -r $OUT/$TARGET_KERNEL_DTBO $OUT/$ANYKERNEL_PATH/
 
     echo ' Packaging flashable Kernel ';
-    cd $ANYKERNEL_PATH;
-    zip -q -r $TARGET_KERNEL_NAME-$CURRENT_TIME-$TARGET_KERNEL_MOD_VERSION.zip *;
+    cd $OUT/$ANYKERNEL_PATH
+    zip -q -r $TARGET_KERNEL_NAME-$CURRENT_TIME-$TARGET_KERNEL_MOD_VERSION.zip *
 
-    echo " Target File:  $OUT/$ANYKERNEL_PATH/$TARGET_KERNEL_NAME-$CURRENT_TIME-$TARGET_KERNEL_MOD_VERSION.zip ";
+    echo " Target File:  $OUT/$ANYKERNEL_PATH/$TARGET_KERNEL_NAME-$CURRENT_TIME-$TARGET_KERNEL_MOD_VERSION.zip "
 }
 
 save_defconfig(){
