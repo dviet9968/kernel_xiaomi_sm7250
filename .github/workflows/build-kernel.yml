@@ -1,0 +1,46 @@
+name: Build Picasso Kernel Zip
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ master, main, android-4.19-main ]
+
+jobs:
+  build:
+    name: Build Kernel for Redmi K30 5G (picasso)
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout Kernel Source
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 1
+
+      - name: Install Build Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            bc bison build-essential ccache curl flex g++-multilib gcc-multilib \
+            git gnupg gperf lib32ncurses5-dev lib32z1-dev liblz4-tool \
+            libncurses5 libncurses5-dev libsdl1.2-dev libssl-dev libxml2 \
+            libxml2-utils lzop pngcrush rsync schedtool squashfs-tools \
+            xsltproc zip zlib1g-dev libtinfo5 libelf-dev
+
+      - name: Download Clang Toolchain (Proton Clang)
+        run: |
+          git clone --depth=1 https://github.com/kdrag0n/proton-clang.git "$GITHUB_WORKSPACE/clang"
+
+      - name: Build Kernel & AnyKernel3 Zip
+        run: |
+          export PATH="$GITHUB_WORKSPACE/clang/bin:$PATH"
+          chmod +x build.sh
+          ./build.sh all
+          mkdir -p "$GITHUB_WORKSPACE/output"
+          cp ../out/AnyKernel3-picasso/*.zip "$GITHUB_WORKSPACE/output/"
+
+      - name: Upload Kernel Flashable Zip Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Picasso-Kernel-Flashable-Zip
+          path: output/*.zip

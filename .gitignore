@@ -10,6 +10,11 @@
 # Normal rules (sorted alphabetically)
 #
 .*
+!.gitignore
+!.gitattributes
+!.github
+!.clang-format
+!.mailmap
 *.a
 *.asn1.[ch]
 *.bin
