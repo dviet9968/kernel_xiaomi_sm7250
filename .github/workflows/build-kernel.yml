@@ -30,12 +30,6 @@ jobs:
         run: |
           git clone --depth=1 https://github.com/kdrag0n/proton-clang.git "$GITHUB_WORKSPACE/clang"
 
-      - name: Setup KernelSU Driver
-        run: |
-          rm -rf KernelSU KernelSU-Next drivers/kernelsu
-          git clone --depth=1 -b v0.9.5 https://github.com/tiann/KernelSU.git KernelSU
-          ln -sf ../KernelSU/kernel drivers/kernelsu
-
       - name: Build Kernel, AnyKernel3 Zip & Fastboot boot.img
         run: |
           export PATH="$GITHUB_WORKSPACE/clang/bin:$PATH"
