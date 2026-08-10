@@ -59,7 +59,7 @@ build_kernel(){
     echo " Building Kernel ...........";
     echo "------------------------------";
 
-    make CC=$CC ARCH=$ARCH CROSS_COMPILE=$CROSS_COMPILE CROSS_COMPILE_COMPAT=$CROSS_COMPILE_COMPAT CLANG_TRIPLE=$CLANG_TRIPLE $CC_ADDITION_FLAGS O=$OUT -j$THREAD Image dtbs dtbo.img;
+    make CC=$CC ARCH=$ARCH CROSS_COMPILE=$CROSS_COMPILE CROSS_COMPILE_COMPAT=$CROSS_COMPILE_COMPAT CLANG_TRIPLE=$CLANG_TRIPLE $CC_ADDITION_FLAGS O=$OUT -j$THREAD;
     END_SEC=$(date +%s);
     COST_SEC=$[ $END_SEC-$START_SEC ];
     echo "Kernel Build Costed $(($COST_SEC/60))min $(($COST_SEC%60))s"
@@ -101,14 +101,15 @@ generate_flashable(){
     (cd $OUT/$ANYKERNEL_PATH && zip -q -r $TARGET_KERNEL_NAME-$CURRENT_TIME-$TARGET_KERNEL_MOD_VERSION.zip *)
 
     echo ' Generating Fastboot boot.img ';
-    if [ -f "$OUT/arch/arm64/boot/Image" ] && [ -f "$ROOT_DIR/scripts/base_ramdisk.img" ]; then
+    RAMDISK_FILE="$ROOT_DIR/scripts/base_ramdisk.cpio"
+    if [ -f "$OUT/arch/arm64/boot/Image" ] && [ -f "$RAMDISK_FILE" ]; then
         python3 "$ROOT_DIR/scripts/repack_boot.py" \
             --kernel "$OUT/arch/arm64/boot/Image" \
-            --ramdisk "$ROOT_DIR/scripts/base_ramdisk.img" \
+            --ramdisk "$RAMDISK_FILE" \
             --dtb "$OUT/arch/arm64/boot/dtb" \
             --output "$OUT/boot.img"
     else
-        echo "Warning: Unable to generate boot.img, Image or base_ramdisk missing"
+        echo "Warning: Unable to generate boot.img (Image or base_ramdisk.cpio missing)"
     fi
 
     echo " Target File:  $OUT/$ANYKERNEL_PATH/$TARGET_KERNEL_NAME-$CURRENT_TIME-$TARGET_KERNEL_MOD_VERSION.zip "

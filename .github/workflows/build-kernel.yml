@@ -41,9 +41,8 @@ jobs:
           export PATH="$GITHUB_WORKSPACE/clang/bin:$PATH"
           chmod +x build.sh
           ./build.sh all
-          mkdir -p "$GITHUB_WORKSPACE/output"
-          cp out/AnyKernel3-picasso/*.zip "$GITHUB_WORKSPACE/output/"
-          cp out/boot.img "$GITHUB_WORKSPACE/output/"
+          cp out/AnyKernel3-picasso/*.zip "$GITHUB_WORKSPACE/output/" 2>/dev/null || true
+          cp out/boot.img "$GITHUB_WORKSPACE/output/" 2>/dev/null || true
           cp out/arch/arm64/boot/dtbo.img "$GITHUB_WORKSPACE/output/" 2>/dev/null || cp out/AnyKernel3-picasso/dtbo.img "$GITHUB_WORKSPACE/output/" 2>/dev/null || true
           ls -lh "$GITHUB_WORKSPACE/output"
 
