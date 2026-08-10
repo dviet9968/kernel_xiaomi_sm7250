@@ -16,6 +16,7 @@
 !.clang-format
 !.mailmap
 PixelExperience*
+Picasso-Kernel*
 *.a
 *.asn1.[ch]
 *.bin
