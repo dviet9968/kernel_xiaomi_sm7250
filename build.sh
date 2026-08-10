@@ -75,6 +75,10 @@ generate_flashable(){
 
     unzip -o $ANYKERNEL_FILE;
 
+    # Ensure dynamic block device detection for Pixel Experience / AOSP recoveries
+    sed -i -e 's|block=/dev/block/.*|block=auto;|g' $ANYKERNEL_PATH/anykernel.sh 2>/dev/null || sed -i '' -e 's|block=/dev/block/.*|block=auto;|g' $ANYKERNEL_PATH/anykernel.sh
+    sed -i -e 's|is_slot_device=0;|is_slot_device=auto;|g' $ANYKERNEL_PATH/anykernel.sh 2>/dev/null || sed -i '' -e 's|is_slot_device=0;|is_slot_device=auto;|g' $ANYKERNEL_PATH/anykernel.sh
+
     echo ' Removing old package file ';
     rm -rf $ANYKERNEL_PATH/$TARGET_KERNEL_NAME*;
 
