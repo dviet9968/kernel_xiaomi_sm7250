@@ -21,7 +21,8 @@ CROSS_COMPILE=aarch64-linux-gnu-;
 CROSS_COMPILE_COMPAT=arm-linux-gnueabi-;
 THREAD=$(nproc --all);
 CC_ADDITION_FLAGS="";
-OUT="../out";
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+OUT="${ROOT_DIR}/out"
 
 TARGET_KERNEL_FILE=arch/arm64/boot/Image;
 TARGET_KERNEL_DTB=arch/arm64/boot/dtb;
@@ -40,6 +41,7 @@ ANYKERNEL_PATH=AnyKernel3-picasso;
 ANYKERNEL_FILE=anykernel.zip;
 
 link_all_dtb_files(){
+    echo " Combining DTB files...";
     find $OUT/arch/arm64/boot/dts/vendor/qcom -name '*.dtb' -exec cat {} + > $OUT/arch/arm64/boot/dtb;
 }
 
@@ -48,6 +50,7 @@ make_defconfig(){
     echo " Building Kernel Defconfig..";
     echo "------------------------------";
 
+    mkdir -p $OUT;
     make CC=$CC ARCH=$ARCH CROSS_COMPILE=$CROSS_COMPILE CROSS_COMPILE_COMPAT=$CROSS_COMPILE_COMPAT CLANG_TRIPLE=$CLANG_TRIPLE $CC_ADDITION_FLAGS O=$OUT -j$THREAD $DEFCONFIG_NAME;
 }
 
@@ -56,11 +59,10 @@ build_kernel(){
     echo " Building Kernel ...........";
     echo "------------------------------";
 
-    make CC=$CC ARCH=$ARCH CROSS_COMPILE=$CROSS_COMPILE CROSS_COMPILE_COMPAT=$CROSS_COMPILE_COMPAT CLANG_TRIPLE=$CLANG_TRIPLE $CC_ADDITION_FLAGS O=$OUT -j$THREAD;
+    make CC=$CC ARCH=$ARCH CROSS_COMPILE=$CROSS_COMPILE CROSS_COMPILE_COMPAT=$CROSS_COMPILE_COMPAT CLANG_TRIPLE=$CLANG_TRIPLE $CC_ADDITION_FLAGS O=$OUT -j$THREAD Image dtbs dtbo.img;
     END_SEC=$(date +%s);
     COST_SEC=$[ $END_SEC-$START_SEC ];
     echo "Kernel Build Costed $(($COST_SEC/60))min $(($COST_SEC%60))s"
-
 }
 
 generate_flashable(){
@@ -68,7 +70,6 @@ generate_flashable(){
     echo " Generating Flashable Kernel";
     echo "------------------------------";
 
-    ROOT_DIR="$(pwd)"
     rm -rf $OUT/$ANYKERNEL_PATH
     mkdir -p $OUT/$ANYKERNEL_PATH
 
@@ -86,20 +87,29 @@ generate_flashable(){
     sed -i -e 's|is_slot_device=.*|is_slot_device=0;|g' $OUT/$ANYKERNEL_PATH/anykernel.sh 2>/dev/null || sed -i '' -e 's|is_slot_device=.*|is_slot_device=0;|g' $OUT/$ANYKERNEL_PATH/anykernel.sh
 
     echo ' Copying Kernel Files '; 
-    cp -r $OUT/$TARGET_KERNEL_FILE $OUT/$ANYKERNEL_PATH/
-    cp -r $OUT/$TARGET_KERNEL_DTB $OUT/$ANYKERNEL_PATH/
-    cp -r $OUT/$TARGET_KERNEL_DTBO $OUT/$ANYKERNEL_PATH/
+    if [ -f "$OUT/arch/arm64/boot/Image" ]; then
+        cp "$OUT/arch/arm64/boot/Image" "$OUT/$ANYKERNEL_PATH/Image"
+    fi
+    if [ -f "$OUT/arch/arm64/boot/dtb" ]; then
+        cp "$OUT/arch/arm64/boot/dtb" "$OUT/$ANYKERNEL_PATH/dtb"
+    fi
+    if [ -f "$OUT/arch/arm64/boot/dtbo.img" ]; then
+        cp "$OUT/arch/arm64/boot/dtbo.img" "$OUT/$ANYKERNEL_PATH/dtbo.img"
+    fi
 
-    echo ' Packaging flashable Kernel ';
-    cd $OUT/$ANYKERNEL_PATH
-    zip -q -r $TARGET_KERNEL_NAME-$CURRENT_TIME-$TARGET_KERNEL_MOD_VERSION.zip *
+    echo ' Packaging flashable AnyKernel3 zip ';
+    (cd $OUT/$ANYKERNEL_PATH && zip -q -r $TARGET_KERNEL_NAME-$CURRENT_TIME-$TARGET_KERNEL_MOD_VERSION.zip *)
 
     echo ' Generating Fastboot boot.img ';
-    python3 $ROOT_DIR/scripts/repack_boot.py \
-        --kernel $OUT/$TARGET_KERNEL_FILE \
-        --ramdisk $ROOT_DIR/scripts/base_ramdisk.img \
-        --dtb $OUT/$TARGET_KERNEL_DTB \
-        --output $OUT/boot.img
+    if [ -f "$OUT/arch/arm64/boot/Image" ] && [ -f "$ROOT_DIR/scripts/base_ramdisk.img" ]; then
+        python3 "$ROOT_DIR/scripts/repack_boot.py" \
+            --kernel "$OUT/arch/arm64/boot/Image" \
+            --ramdisk "$ROOT_DIR/scripts/base_ramdisk.img" \
+            --dtb "$OUT/arch/arm64/boot/dtb" \
+            --output "$OUT/boot.img"
+    else
+        echo "Warning: Unable to generate boot.img, Image or base_ramdisk missing"
+    fi
 
     echo " Target File:  $OUT/$ANYKERNEL_PATH/$TARGET_KERNEL_NAME-$CURRENT_TIME-$TARGET_KERNEL_MOD_VERSION.zip "
     echo " Fastboot Image: $OUT/boot.img "
