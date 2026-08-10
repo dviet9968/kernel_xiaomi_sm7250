@@ -24,7 +24,7 @@ jobs:
             git gnupg gperf lib32ncurses5-dev lib32z1-dev liblz4-tool \
             libncurses5 libncurses5-dev libsdl1.2-dev libssl-dev libxml2 \
             libxml2-utils lzop pngcrush rsync schedtool squashfs-tools \
-            xsltproc zip zlib1g-dev libtinfo5 libelf-dev
+            xsltproc zip zlib1g-dev libtinfo5 libelf-dev python3
 
       - name: Download Clang Toolchain (Proton Clang)
         run: |
@@ -36,16 +36,18 @@ jobs:
           git clone --depth=1 -b main https://github.com/tiann/KernelSU.git KernelSU
           ln -sf ../KernelSU/kernel drivers/kernelsu
 
-      - name: Build Kernel & AnyKernel3 Zip
+      - name: Build Kernel, AnyKernel3 Zip & Fastboot boot.img
         run: |
           export PATH="$GITHUB_WORKSPACE/clang/bin:$PATH"
           chmod +x build.sh
           ./build.sh all
           mkdir -p "$GITHUB_WORKSPACE/output"
           cp ../out/AnyKernel3-picasso/*.zip "$GITHUB_WORKSPACE/output/"
+          cp ../out/boot.img "$GITHUB_WORKSPACE/output/" 2>/dev/null || true
+          cp ../out/arch/arm64/boot/dtbo.img "$GITHUB_WORKSPACE/output/" 2>/dev/null || true
 
-      - name: Upload Kernel Flashable Zip Artifact
+      - name: Upload Kernel Artifacts (Zip + Fastboot Boot Image)
         uses: actions/upload-artifact@v4
         with:
           name: Picasso-Kernel-Flashable-Zip
-          path: output/*.zip
+          path: output/*

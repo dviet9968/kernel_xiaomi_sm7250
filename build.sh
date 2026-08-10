@@ -94,7 +94,15 @@ generate_flashable(){
     cd $OUT/$ANYKERNEL_PATH
     zip -q -r $TARGET_KERNEL_NAME-$CURRENT_TIME-$TARGET_KERNEL_MOD_VERSION.zip *
 
+    echo ' Generating Fastboot boot.img ';
+    python3 $ROOT_DIR/scripts/repack_boot.py \
+        --kernel $OUT/$TARGET_KERNEL_FILE \
+        --ramdisk $ROOT_DIR/scripts/base_ramdisk.img \
+        --dtb $OUT/$TARGET_KERNEL_DTB \
+        --output $OUT/boot.img
+
     echo " Target File:  $OUT/$ANYKERNEL_PATH/$TARGET_KERNEL_NAME-$CURRENT_TIME-$TARGET_KERNEL_MOD_VERSION.zip "
+    echo " Fastboot Image: $OUT/boot.img "
 }
 
 save_defconfig(){
